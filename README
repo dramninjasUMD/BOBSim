@@ -1,0 +1,206 @@
+BOBSim: A cycle accurate Buffer-On-Board Memory System Simulator
+================================================================================
+Elliott Cooper-Balis
+Paul Rosenfeld
+Bruce Jacob
+University of Maryland
+dramninjas [at] gmail [dot] com
+
+1 About BOBSim ------------------------------------------------------------------
+
+The design and implementation of the commodity memory architecture has resulted 
+in significant performance and capacity limitations. To circumvent these 
+limitations, designers and vendors have begun to place intermediate logic 
+between the CPU and DRAM. This additional logic has two functions: to control 
+the commodity DRAM and to communicate with the CPU over a fast and narrow bus. 
+The benefit provided by this logic is a reduction in pin-out to the memory 
+system and increased signal integrity to the DRAM, allowing faster clock rates 
+while maintaining capacity.
+
+BOBSim is a cycle-based simulator written in C++ that encapsulates all aspects 
+of this "buffer-on-board" (BOB) memory system. Each of the major logical portions 
+of the design have a corresponding software object and associated parameters that 
+give total control over all aspects of the system's configuration and behavior. 
+
+For more details about this architecture please see : 
+
+http://blah.blah/blah
+
+2 Getting BOBSim ------------------------------------------------------------------
+
+BOBSim is available on github. If you have git installed you can clone our 
+repository by typing:
+
+$ git clone git://github.com/dramninjasUMD/BOBSim.git
+
+3 Building BOBSim ------------------------------------------------------------------
+
+To build an optimized standalone version of the simulator simply type:
+$ make
+
+To build the BOBSim library, type:
+$ make libbobsim.so
+
+4 Running BOBSim ------------------------------------------------------------------
+
+BOBSim is run in two separate modes: stand-alone mode and full-system mode.  In 
+stand-alone mode, a parameterizable random address stream is issued directly to 
+the memory system.  In full-system mode, BOBSim is attached to a CPU simulator and 
+requests are generated from actual program execution.  
+
+Regardless of the mode being used, all parameters and configurations are set within
+the Globals.h file (yes, regrettably, you must recompile when changing parameters).  
+Field names for parameters should correspond to portions of the architecture 
+described on the wiki (url).  To save some time, the makefile has a directive 
+for a particular DRAM device which are defined in Globals.h.  The available
+devices are DDR3-1066, DDR3-1333, and DDR3-1600.   
+
+STAND-ALONE MODE : 
+
+In this mode, an address stream generated in RandomStreamSim.c is issued directly
+to the memory system.  This address stream can be modified with the parameters
+READ_WRITE_RATIO and PORT_UTILIZATION.  The former dictates the request mix as a
+ratio of reads to the total number of requests as a percentage and the latter
+dictates the frequency of requests from 0 (no requests) to 1.0 (as fast as 
+possible)
+
+To run it :
+
+$ ./BOBSim -c X -n Y -q 
+
+command line arguments
+-c X : Dictates number of CPU cycles to execute
+-n Y : Dictates the number of ports on the main BOB controller
+-q   : Quiet mode, turns off all output (except for epoch output shown below)
+
+
+FULL-SYSTEM MODE : 
+
+As with DRAMSim2, BOBSim strives to make integration with other full-system 
+simulators as easy as possible.  Several public functions are available to 
+enable this and are described on the BOBSim wiki :
+
+https://wiki.umd.edu/BOBSim/index.php?title=Running_BOBsim
+
+5 BOBSim Epoch Output ------------------------------------------------------------------
+
+Example output from a one million cycle epoch execution.  The first portion shows
+general stats about the request mix, average system bandwidth for that epoch, and
+latency statistics.  
+
+==================Epoch [1]=======================
+per epoch] reads   : 149984 writes : 74451 (66.8274% Reads) : 224435
+lifetime ] reads   : 149984 writes : 74451 total : 224435
+issued logic ops   : 0 returned logic responses : 0
+bandwidth          : 42.8076 GB/sec
+current cycle      : 1000000
+--------------------------
+full time mean  : 248.938 ns
+          std   : 150.934 ns
+          min   : 43.4375 ns
+          max   : 1136.25 ns
+chan time mean  : 202.682 ns
+           std  : 125.106
+           min  : 41.5625 ns
+           max  : 868.75 ns
+dram time mean  : 56.9559 ns
+          std   : 40.3156 ns
+          min   : 32.5 ns
+          max   : 277.5 ns
+
+The next portion shows the latency components (in nanoseconds) for read requests 
+sent to each channel in the system.  This example shows 8 DRAM channels.
+
+-- Per Channel Latency Components in nanoseconds (All from READs) : 
+      reqPort    reqLink     workQ    access     rrq    rspLink   rspPort  total
+0]   49.8418    1.5625   20.3763   57.0755  114.0523    8.0797    1.2500  252.2381
+1]   44.2388    1.5625   20.1603   57.8072  122.3065    8.0807    1.2500  255.4060
+2]   41.5492    1.5625   20.5893   58.0432  123.1006    8.0785    1.2500  254.1732
+3]   50.1635    1.5625   22.4312   61.3874  129.6183    8.0801    1.2500  274.4930
+4]   42.6759    1.5625   19.3439   54.6489  112.3736    8.0815    1.2500  239.9363
+5]   49.4876    1.5625   21.6093   58.9417  119.4585    8.0809    1.2500  260.3906
+6]   39.3225    1.5625   18.7533   55.4073  106.8524    8.0807    1.2500  231.2286
+7]   35.3873    1.5625   17.6407   52.1759  106.6302    8.0809    1.2500  222.7276
+
+This portion displays the utilization and statitics of the ports on the main BOB
+controller (which resides on the CPU).  
+
+ ---  Port stats (per epoch) : 
+ 0]  request: 88.8854% idle  response: 85.0348% idle  rds:37462 wrts:18421 rtn:37413 tot:55883
+ 1]  request: 88.766% idle  response: 84.9828% idle  rds:37576 wrts:18691 rtn:37543 tot:56267
+ 2]  request: 88.7678% idle  response: 85.0892% idle  rds:37319 wrts:18751 rtn:37277 tot:56070
+ 3]  request: 88.7866% idle  response: 84.8996% idle  rds:37782 wrts:18588 rtn:37751 tot:56370
+ === BOB Print === 
+ == Ports
+  -- Port 0 - inputBufferAvg : 7.93731 (8)   outputBufferAvg : 0.149652 (0)
+  -- Port 1 - inputBufferAvg : 7.93691 (8)   outputBufferAvg : 0.150172 (0)
+  -- Port 2 - inputBufferAvg : 7.9372 (8)   outputBufferAvg : 0.149108 (0)
+  -- Port 3 - inputBufferAvg : 7.93662 (8)   outputBufferAvg : 0.151004 (0)
+
+Below, the total generated bandwidth on each request and response link bus as 
+a result of both packet overhead and data.  The last line is the average over
+all the links in the system.  
+
+ == Link Bandwidth (!! Includes packet overhead and request packets !!)
+    Req Link(6.4 GB/s peak)  Rsp Link(9.6 GB/s peak)
+      5.26287 GB/s             8.68574 GB/s
+      5.22612 GB/s             8.69114 GB/s
+      5.3185 GB/s             8.64727 GB/s
+      5.18673 GB/s             8.53269 GB/s
+     -----------
+      5.24856          8.63921 (avgs)
+
+The section below consists of various statistics about each channel such as 
+total requests, queue depths, generated bandwidth, and bank stats.
+
+ == Channel Usage (32GB/Chan == 256 GB total)
+     reqs   workQAvg  workQMax idleBanks   actBanks  preBanks  refBanks  (totalBanks) BusIdle  BW(10.6667)  RRQMax(16)   RRQFull lifetimeRequests
+0]    28141    1.8382        16   24.9417    5.1901    1.2149    0.6533   32.0000     46.00     5.364        15(15)    418853     28141
+1]    28240    1.8082        14   24.9090    5.2221    1.2197    0.6492   32.0000     45.79     5.385        15(2)    437252     28240
+2]    28093    1.8314        16   24.8532    5.2843    1.2133    0.6492   32.0000     46.07     5.357        15(13)    451932     28093
+3]    28157    1.9971        15   24.5384    5.5927    1.2156    0.6533   32.0000     45.97     5.367        15(15)    536573     28157
+4]    28270    1.7377        15   25.1464    4.9791    1.2212    0.6533   32.0000     45.73     5.392        15(1)    354155     28270
+5]    28186    1.9130        15   24.7201    5.4096    1.2172    0.6531   32.0000     45.90     5.374        15(5)    467118     28186
+6]    27995    1.6948        15   25.1484    4.9896    1.2087    0.6533   32.0000     46.28     5.337        15(15)    374438     27995
+7]    27476    1.5340        16   25.5402    4.6199    1.1866    0.6533   32.0000     47.26     5.239        15(14)    300199     27476
+                                                                                          AVG : 5.35199
+ == Requests seen at Channels
+  -- Reads  : 150116
+  -- Writes : 74442
+            = 224558
+
+This section shows power consumption of each DRAM channel and the power
+necessary to operate the simple controllers in that particular system.
+
+ == Channel Power
+    -- Channel 0 -- DRAM Power : 9.17485 w
+    -- Channel 1 -- DRAM Power : 9.19294 w
+    -- Channel 2 -- DRAM Power : 9.16597 w
+    -- Channel 3 -- DRAM Power : 9.18945 w
+    -- Channel 4 -- DRAM Power : 9.19224 w
+    -- Channel 5 -- DRAM Power : 9.1892 w
+    -- Channel 6 -- DRAM Power : 9.14323 w
+    -- Channel 7 -- DRAM Power : 9.0448 w
+   Average Power  : 9.16159 w
+   Total Power    : 73.2927 w
+   SimpCont BG Power : 28 w
+   SimpCont Core Power : 28 w
+   System Power   : 129.293 w
+
+Used to ensure everyone is at the same point in time.
+
+ == Time Check
+    CPU Time : 312500ns
+   DRAM Time : 312500ns
+
+
+6 BOBSim Output Files ------------------------------------------------------------------
+
+BOBSim generates 3 output files : 
+
+BOBStats.txt - contains parameters used for simulation and CSV output of various data
+ 
+BOBPower.txt - contains CSV data of all power consumption (and components) within the system 
+
+BOBSim.txt - when compiling with pre-processor directive LOG_OUTPUT, all epoch output
+is printed in this file 

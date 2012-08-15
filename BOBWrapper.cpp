@@ -261,17 +261,17 @@ bool BOBWrapper::AddTransaction(uint64_t addr, bool isWrite, int coreID, void *l
 	int openPort;
 	bool isLogicOp = logicOperation != NULL;
 	TransactionType type = isLogicOp ? LOGIC_OPERATION : (isWrite ? DATA_WRITE : DATA_READ) ;
-	Transaction *trans = new Transaction(type, TRANSACTION_SIZE, addr);
-	trans->coreID=coreID;
-	if (isLogicOp)
-	{
-		trans->logicOpContents = logicOperation;
-	}
+	Transaction *trans;
 
 	if ((openPort = FindOpenPort(coreID)) > -1)
 	{
+		trans = new Transaction(type, TRANSACTION_SIZE, addr);
 		trans->portID = openPort;
-
+		trans->coreID=coreID;
+		if (isLogicOp)
+		{
+			trans->logicOpContents = logicOperation;
+		}
 		if(currentClockCycle<5000)
 		{
 			DEBUG("!! "<<*trans<<" to port "<<openPort);
